@@ -1,15 +1,22 @@
 package service
 
 import (
+	"errors"
 	"gopher/src/coreplugins"
 	"gopher/src/model"
 	"gopher/src/repository"
 	"log"
+	"time"
+
+	"github.com/golang-jwt/jwt/v5"
+	"gorm.io/gorm"
 )
 
 type UserService interface {
 	GetUsers() ([]model.UserResponse, error)
 	GetUser(uint) (*model.UserResponse, error)
+	NewUser(model.NewUserRequest) (*model.UserResponse, error)
+	Login(model.LoginRequest) (*model.LoginResponse, error)
 }
 
 type userService struct {
@@ -18,6 +25,96 @@ type userService struct {
 
 func NewUserService(userRepo repository.UserRepository) UserService {
 	return userService{userRepo: userRepo}
+}
+
+func (s userService) Login(request model.LoginRequest) (*model.LoginResponse, error) {
+	config, _ := coreplugins.Env()
+	user, err := s.userRepo.GetByEmail(request.Email)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("user not found")
+		}
+		log.Println(err)
+		coreplugins.WebhookSend(coreplugins.NewDiscord(), err.Error())
+		return nil, err
+	}
+
+	ok := coreplugins.CheckPasswordHash(request.Password, user.Password)
+	if !ok {
+		return nil, errors.New("Password incorrect")
+	}
+
+	accessClaims := jwt.MapClaims{
+		"email":    user.Email,
+		"name":     user.Name,
+		"surname":  user.Surname,
+		"nickname": user.Nickname,
+		"exp":      float64(time.Now().Add(24 * time.Hour).Unix()),
+	}
+	refreshClaims := accessClaims
+	refreshClaims["exp"] = float64(time.Now().Add(72 * time.Hour).Unix())
+	accessToken, err := coreplugins.Token(accessClaims, config.JwtSecret)
+	if err != nil {
+		log.Println(err)
+		coreplugins.WebhookSend(coreplugins.NewDiscord(), err.Error())
+		return nil, err
+	}
+	refreshToken, err := coreplugins.Token(refreshClaims, config.JwtSecret)
+	if err != nil {
+		log.Println(err)
+		coreplugins.WebhookSend(coreplugins.NewDiscord(), err.Error())
+		return nil, err
+	}
+
+	response := model.LoginResponse{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}
+
+	return &response, nil
+}
+
+func (s userService) NewUser(request model.NewUserRequest) (*model.UserResponse, error) {
+	userExist, err := s.userRepo.GetByEmail(request.Email)
+	if userExist != nil {
+		return nil, errors.New("this email is already used")
+	}
+
+	hash, err := coreplugins.HashPassword(request.Password)
+	if err != nil {
+		log.Println(err)
+		coreplugins.WebhookSend(coreplugins.NewDiscord(), err.Error())
+		return nil, err
+	}
+
+	user := model.User{
+		Email:    request.Email,
+		Password: hash,
+		Name:     request.Name,
+		Surname:  request.Surname,
+		Nickname: request.Nickname,
+		Age:      request.Age,
+		Gender:   request.Gender,
+	}
+
+	newUser, err := s.userRepo.Create(user)
+	if err != nil {
+		log.Println(err)
+		coreplugins.WebhookSend(coreplugins.NewDiscord(), err.Error())
+		return nil, err
+	}
+
+	response := model.UserResponse{
+		ID:        newUser.ID,
+		Email:     newUser.Email,
+		Name:      newUser.Name,
+		Surname:   newUser.Surname,
+		Nickname:  newUser.Nickname,
+		Age:       newUser.Age,
+		Gender:    newUser.Gender,
+		UpdatedAt: newUser.UpdatedAt,
+	}
+	return &response, nil
 }
 
 func (s userService) GetUsers() ([]model.UserResponse, error) {
@@ -31,13 +128,13 @@ func (s userService) GetUsers() ([]model.UserResponse, error) {
 	userResponses := []model.UserResponse{}
 	for _, user := range users {
 		userResponse := model.UserResponse{
-			ID: user.ID,
-			Email: user.Email,
-			Name: user.Name,
-			Surname: user.Surname,
-			Nickname: user.Nickname,
-			Age: user.Age,
-			Gender: user.Gender,
+			ID:        user.ID,
+			Email:     user.Email,
+			Name:      user.Name,
+			Surname:   user.Surname,
+			Nickname:  user.Nickname,
+			Age:       user.Age,
+			Gender:    user.Gender,
 			UpdatedAt: user.UpdatedAt,
 		}
 		userResponses = append(userResponses, userResponse)
@@ -53,13 +150,13 @@ func (s userService) GetUser(id uint) (*model.UserResponse, error) {
 		return nil, err
 	}
 	userResponse := model.UserResponse{
-		ID: user.ID,
-		Email: user.Email,
-		Name: user.Name,
-		Surname: user.Surname,
-		Nickname: user.Nickname,
-		Age: user.Age,
-		Gender: user.Gender,
+		ID:        user.ID,
+		Email:     user.Email,
+		Name:      user.Name,
+		Surname:   user.Surname,
+		Nickname:  user.Nickname,
+		Age:       user.Age,
+		Gender:    user.Gender,
 		UpdatedAt: user.UpdatedAt,
 	}
 	return &userResponse, nil

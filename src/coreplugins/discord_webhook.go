@@ -19,7 +19,7 @@ func WebhookSend(dc *discordgo.Session, text string) {
 	config, _ := Env()
 
 	hookMessage := &discordgo.WebhookParams{
-		Content: "```json\n" + text + "\n```" + "\n@everyone",
+		Content: "```json\n" + text + "\n```",
 	}
 	_, err := dc.WebhookExecute(config.Discord.WebHookID, config.Discord.Token, false, hookMessage)
 	if err != nil {

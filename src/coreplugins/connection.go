@@ -28,6 +28,7 @@ func InitDatabase() *gorm.DB {
 	dial := postgres.Open(dsn)
 	db, err := gorm.Open(dial, &gorm.Config{
 		// Logger: &SqlLogger{},
+		Logger: logger.Default.LogMode(logger.Silent),
 		DryRun: false,
 	})
 	if err != nil {
@@ -54,4 +55,8 @@ func InitMongo() *mongo.Client {
 
 	fmt.Println("MongoDB has been initialize")
 	return client
+}
+
+func GetCollection(client *mongo.Client, collectionName string) *mongo.Collection {
+	return client.Database("my_go_dev").Collection(collectionName)
 }

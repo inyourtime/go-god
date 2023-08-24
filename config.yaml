@@ -14,3 +14,4 @@ database:
     sslmode: "disable"
   mongodb:
     uri: "mongodb://localhost:27017/my_go_dev"
+jwt_secret: "skdlng9204u5yh34ljkvkwretwubo"
