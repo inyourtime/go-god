@@ -1,13 +1,13 @@
 package handler
 
 import (
-	"fmt"
+	"gopher/src/errs"
 	"gopher/src/model"
 	"gopher/src/service"
-	"strings"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 type authHandler struct {
@@ -22,38 +22,54 @@ func (h authHandler) Login(c *fiber.Ctx) error {
 	request := model.LoginRequest{}
 	err := c.BodyParser(&request)
 	if err != nil {
-		return err
+		return errs.FiberError(c, fiber.ErrUnprocessableEntity)
 	}
 
 	validate := validator.New()
 	err = validate.Struct(request)
 	if err != nil {
-		return fiber.ErrBadRequest
+		return errs.FiberError(c, fiber.ErrBadRequest)
 	}
 
-	fmt.Println(c.Hostname())
-	fmt.Println(c.GetReqHeaders()["Authorization"])
-	fmt.Println(c.OriginalURL())
-
-	// x := map[string]string{}
-	// c.QueryParser(&x)
-	fmt.Println(c.Queries())
-	bd := map[string]interface{}{}
-	c.BodyParser(&bd)
-	fmt.Println(bd)
-	i := c.GetReqHeaders()["Authorization"]
-	if strings.HasPrefix(i, "Bearer ") {
-		token := strings.TrimPrefix(i, "Bearer ")
-		fmt.Println(token)
-	} else {
-		fmt.Println("Invalid input format")
+	response, err := h.userService.Login(request)
+	if err != nil {
+		if appErr, ok := err.(*fiber.Error); ok {
+			return errs.FiberError(c, appErr)
+		}
+		return errs.FiberError(c, fiber.ErrInternalServerError)
 	}
-
-	user, _ := h.userService.GetUsers()
-	_ = user
-	return c.SendString("Hello, Boat")
+	return c.JSON(response)
 }
 
 func (h authHandler) SignUp(c *fiber.Ctx) error {
-	return nil
+	request := model.NewUserRequest{}
+	err := c.BodyParser(&request)
+	if err != nil {
+		return errs.FiberError(c, fiber.ErrUnprocessableEntity)
+	}
+
+	validate := validator.New()
+	err = validate.Struct(request)
+	if err != nil {
+		return errs.FiberError(c, fiber.ErrBadRequest)
+	}
+
+	response, err := h.userService.NewUser(request)
+	if err != nil {
+		if appErr, ok := err.(*fiber.Error); ok {
+			return errs.FiberError(c, appErr)
+		}
+		return errs.FiberError(c, fiber.ErrInternalServerError)
+	}
+	return c.JSON(response)
+}
+
+func (h authHandler) Test(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	name := claims["name"].(string)
+	surname := claims["surname"].(string)
+	return c.JSON(fiber.Map{
+		"hello": name + surname,
+	})
 }

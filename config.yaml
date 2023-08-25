@@ -1,3 +1,4 @@
+server_port: "8000"
 discord:
   webhook_id: "1143500994299310092"
   token: "QjQr2LewR9tqc-BFxjgPFFmyfPfhDe-HHRdvSDluu1rYzGaoTIwuJ70dJDDLko4Aycca"

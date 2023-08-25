@@ -37,11 +37,11 @@ type UserResponse struct {
 }
 
 type NewUserRequest struct {
-	Email    string     `json:"email"`
-	Password string     `json:"password"`
-	Name     string     `json:"name"`
-	Surname  string     `json:"surname"`
+	Email    string     `json:"email" validate:"required,email"`
+	Password string     `json:"password" validate:"required"`
+	Name     string     `json:"name" validate:"required"`
+	Surname  string     `json:"surname" validate:"required"`
 	Nickname *string    `json:"nickname"`
 	Age      *int       `json:"age"`
-	Gender   genderType `json:"gender"`
+	Gender   genderType `json:"gender" validate:"required,oneof=male female unspecified"`
 }

@@ -18,8 +18,8 @@ func Recover() fiber.Handler {
 
 				// Respond with a 500 status code to the client
 				c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-					"code":  fiber.StatusInternalServerError,
-					"error": "Internal Server Error",
+					"code":    fiber.StatusInternalServerError,
+					"message": "Internal Server Error",
 				})
 
 				logs.Error(r)

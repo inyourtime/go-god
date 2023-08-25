@@ -29,11 +29,12 @@ func main() {
 
 	app.Use(middlewere.Recover())
 	app.Use(logger.New())
+
 	router.SetupRoutes(app)
 
-	fmt.Println("Server is running on Port 8000")
+	fmt.Println("Server is running on Port: " + coreplugins.Config.ServerPort)
 	// logs.Error("test")
-	app.Listen(":8000")
+	app.Listen(":" + coreplugins.Config.ServerPort)
 }
 
 func databaseSetting(sql *gorm.DB, nosql *mongo.Client) func() {

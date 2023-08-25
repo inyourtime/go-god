@@ -6,8 +6,8 @@ import (
 	"gopher/src/logs"
 	"gopher/src/model"
 	"gopher/src/repository"
-	"time"
 
+	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 	"gorm.io/gorm"
 )
@@ -31,7 +31,7 @@ func (s userService) Login(request model.LoginRequest) (*model.LoginResponse, er
 	user, err := s.userRepo.GetByEmail(request.Email)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("user not found")
+			return nil, fiber.NewError(fiber.StatusNotFound, "user not found")
 		}
 		logs.Error(err)
 		return nil, err
@@ -39,7 +39,7 @@ func (s userService) Login(request model.LoginRequest) (*model.LoginResponse, er
 
 	ok := coreplugins.CheckPasswordHash(request.Password, user.Password)
 	if !ok {
-		return nil, errors.New("Password incorrect")
+		return nil, fiber.NewError(fiber.StatusUnauthorized, "unauthorized")
 	}
 
 	accessClaims := jwt.MapClaims{
@@ -47,10 +47,14 @@ func (s userService) Login(request model.LoginRequest) (*model.LoginResponse, er
 		"name":     user.Name,
 		"surname":  user.Surname,
 		"nickname": user.Nickname,
-		"exp":      float64(time.Now().Add(24 * time.Hour).Unix()),
+		"exp":      coreplugins.AccessTokenExpireTime(),
 	}
-	refreshClaims := accessClaims
-	refreshClaims["exp"] = float64(time.Now().Add(72 * time.Hour).Unix())
+	refreshClaims := jwt.MapClaims{}
+	for key, value := range accessClaims {
+		refreshClaims[key] = value
+	}
+
+	refreshClaims["exp"] = coreplugins.RefreshTokenExpireTime()
 	accessToken, err := coreplugins.Token(accessClaims, coreplugins.Config.JwtSecret)
 	if err != nil {
 		logs.Error(err)
@@ -73,7 +77,7 @@ func (s userService) Login(request model.LoginRequest) (*model.LoginResponse, er
 func (s userService) NewUser(request model.NewUserRequest) (*model.UserResponse, error) {
 	userExist, err := s.userRepo.GetByEmail(request.Email)
 	if userExist != nil {
-		return nil, errors.New("this email is already used")
+		return nil, fiber.NewError(fiber.StatusUnprocessableEntity, "email already exist")
 	}
 
 	hash, err := coreplugins.HashPassword(request.Password)
@@ -138,6 +142,9 @@ func (s userService) GetUsers() ([]model.UserResponse, error) {
 func (s userService) GetUser(id uint) (*model.UserResponse, error) {
 	user, err := s.userRepo.GetById(id)
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fiber.NewError(fiber.StatusNotFound, "user not found")
+		}
 		logs.Error(err)
 		return nil, err
 	}

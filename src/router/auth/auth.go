@@ -3,6 +3,7 @@ package authRoute
 import (
 	"gopher/src/database"
 	"gopher/src/handler"
+	"gopher/src/middlewere"
 	"gopher/src/repository"
 	"gopher/src/service"
 
@@ -23,4 +24,5 @@ func SetupAuthRoute(router fiber.Router) {
 
 	auth.Post("/login", authHandler.Login)
 	auth.Post("/signup", authHandler.SignUp)
+	auth.Get("/test", middlewere.Authenticate(), authHandler.Test)
 }

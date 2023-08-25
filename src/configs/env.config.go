@@ -1,9 +1,10 @@
 package configs
 
 type Env struct {
-	Discord   DisCordWebHook `mapstructure:"discord"`
-	Database  DataBase       `mapstructure:"database"`
-	JwtSecret string         `mapstructure:"jwt_secret"`
+	ServerPort string         `mapstructure:"server_port"`
+	Discord    DisCordWebHook `mapstructure:"discord"`
+	Database   DataBase       `mapstructure:"database"`
+	JwtSecret  string         `mapstructure:"jwt_secret"`
 }
 
 type DisCordWebHook struct {
