@@ -3,9 +3,9 @@ package service
 import (
 	"errors"
 	"gopher/src/coreplugins"
+	"gopher/src/logs"
 	"gopher/src/model"
 	"gopher/src/repository"
-	"log"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -14,9 +14,9 @@ import (
 
 type UserService interface {
 	GetUsers() ([]model.UserResponse, error)
-	GetUser(uint) (*model.UserResponse, error)
-	NewUser(model.NewUserRequest) (*model.UserResponse, error)
-	Login(model.LoginRequest) (*model.LoginResponse, error)
+	GetUser(id uint) (*model.UserResponse, error)
+	NewUser(request model.NewUserRequest) (*model.UserResponse, error)
+	Login(request model.LoginRequest) (*model.LoginResponse, error)
 }
 
 type userService struct {
@@ -28,14 +28,12 @@ func NewUserService(userRepo repository.UserRepository) UserService {
 }
 
 func (s userService) Login(request model.LoginRequest) (*model.LoginResponse, error) {
-	config, _ := coreplugins.Env()
 	user, err := s.userRepo.GetByEmail(request.Email)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.New("user not found")
 		}
-		log.Println(err)
-		coreplugins.WebhookSend(coreplugins.NewDiscord(), err.Error())
+		logs.Error(err)
 		return nil, err
 	}
 
@@ -53,16 +51,14 @@ func (s userService) Login(request model.LoginRequest) (*model.LoginResponse, er
 	}
 	refreshClaims := accessClaims
 	refreshClaims["exp"] = float64(time.Now().Add(72 * time.Hour).Unix())
-	accessToken, err := coreplugins.Token(accessClaims, config.JwtSecret)
+	accessToken, err := coreplugins.Token(accessClaims, coreplugins.Config.JwtSecret)
 	if err != nil {
-		log.Println(err)
-		coreplugins.WebhookSend(coreplugins.NewDiscord(), err.Error())
+		logs.Error(err)
 		return nil, err
 	}
-	refreshToken, err := coreplugins.Token(refreshClaims, config.JwtSecret)
+	refreshToken, err := coreplugins.Token(refreshClaims, coreplugins.Config.JwtSecret)
 	if err != nil {
-		log.Println(err)
-		coreplugins.WebhookSend(coreplugins.NewDiscord(), err.Error())
+		logs.Error(err)
 		return nil, err
 	}
 
@@ -82,8 +78,7 @@ func (s userService) NewUser(request model.NewUserRequest) (*model.UserResponse,
 
 	hash, err := coreplugins.HashPassword(request.Password)
 	if err != nil {
-		log.Println(err)
-		coreplugins.WebhookSend(coreplugins.NewDiscord(), err.Error())
+		logs.Error(err)
 		return nil, err
 	}
 
@@ -99,8 +94,7 @@ func (s userService) NewUser(request model.NewUserRequest) (*model.UserResponse,
 
 	newUser, err := s.userRepo.Create(user)
 	if err != nil {
-		log.Println(err)
-		coreplugins.WebhookSend(coreplugins.NewDiscord(), err.Error())
+		logs.Error(err)
 		return nil, err
 	}
 
@@ -120,8 +114,7 @@ func (s userService) NewUser(request model.NewUserRequest) (*model.UserResponse,
 func (s userService) GetUsers() ([]model.UserResponse, error) {
 	users, err := s.userRepo.GetAll()
 	if err != nil {
-		log.Println(err)
-		coreplugins.WebhookSend(coreplugins.NewDiscord(), err.Error())
+		logs.Error(err)
 		return nil, err
 	}
 
@@ -145,8 +138,7 @@ func (s userService) GetUsers() ([]model.UserResponse, error) {
 func (s userService) GetUser(id uint) (*model.UserResponse, error) {
 	user, err := s.userRepo.GetById(id)
 	if err != nil {
-		log.Println(err)
-		coreplugins.WebhookSend(coreplugins.NewDiscord(), err.Error())
+		logs.Error(err)
 		return nil, err
 	}
 	userResponse := model.UserResponse{

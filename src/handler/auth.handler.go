@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"gopher/src/model"
 	"gopher/src/service"
+	"strings"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -29,8 +30,27 @@ func (h authHandler) Login(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.ErrBadRequest
 	}
-	
-	fmt.Println(request)
+
+	fmt.Println(c.Hostname())
+	fmt.Println(c.GetReqHeaders()["Authorization"])
+	fmt.Println(c.OriginalURL())
+
+	// x := map[string]string{}
+	// c.QueryParser(&x)
+	fmt.Println(c.Queries())
+	bd := map[string]interface{}{}
+	c.BodyParser(&bd)
+	fmt.Println(bd)
+	i := c.GetReqHeaders()["Authorization"]
+	if strings.HasPrefix(i, "Bearer ") {
+		token := strings.TrimPrefix(i, "Bearer ")
+		fmt.Println(token)
+	} else {
+		fmt.Println("Invalid input format")
+	}
+
+	user, _ := h.userService.GetUsers()
+	_ = user
 	return c.SendString("Hello, Boat")
 }
 

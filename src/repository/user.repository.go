@@ -8,9 +8,9 @@ import (
 
 type UserRepository interface {
 	GetAll() ([]model.User, error)
-	GetById(uint) (*model.User, error)
-	Create(model.User) (*model.User, error)
-	GetByEmail(string) (*model.User, error)
+	GetById(id uint) (*model.User, error)
+	Create(user model.User) (*model.User, error)
+	GetByEmail(email string) (*model.User, error)
 }
 
 type userRepositoryDB struct {

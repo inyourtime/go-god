@@ -8,6 +8,8 @@ import (
 	"github.com/spf13/viper"
 )
 
+var Config *configs.Env
+
 func Env() (*configs.Env, error) {
 	configs := configs.Env{}
 	err := viper.Unmarshal(&configs)
@@ -27,6 +29,8 @@ func InitConfig() {
 	if err != nil {
 		panic(err)
 	}
+	// save configs variable
+	Config, _ = Env()
 }
 
 func Dsn() string {

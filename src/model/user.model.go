@@ -45,4 +45,3 @@ type NewUserRequest struct {
 	Age      *int       `json:"age"`
 	Gender   genderType `json:"gender"`
 }
-

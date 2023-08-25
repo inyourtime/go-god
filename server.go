@@ -2,24 +2,42 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"gopher/src/coreplugins"
-	"gopher/src/handler"
+	"gopher/src/database"
 	"gopher/src/middlewere"
-	"gopher/src/repository"
-	"gopher/src/service"
+	"gopher/src/router"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
+	"go.mongodb.org/mongo-driver/mongo"
+	"gorm.io/gorm"
 )
 
 func main() {
 	coreplugins.InitConfig()
-	// config, _ := coreplugins.Env()
-	db := coreplugins.InitDatabase()
-	mg := coreplugins.InitMongo()
+	database.ConnectSqlDatabase()
+	database.ConnectNoSqlDatabase()
 
-	pg, err := db.DB()
+	cleanup := databaseSetting(database.SqlDB, database.NoSqlDB)
+	defer cleanup()
+
+	coreplugins.NewDiscord()
+
+	app := fiber.New()
+
+	app.Use(middlewere.Recover())
+	app.Use(logger.New())
+	router.SetupRoutes(app)
+
+	fmt.Println("Server is running on Port 8000")
+	// logs.Error("test")
+	app.Listen(":8000")
+}
+
+func databaseSetting(sql *gorm.DB, nosql *mongo.Client) func() {
+	pg, err := sql.DB()
 	if err != nil {
 		panic(err)
 	}
@@ -28,64 +46,14 @@ func main() {
 	pg.SetMaxOpenConns(100)
 	pg.SetConnMaxIdleTime(time.Hour)
 
-	defer func() {
+	return func() {
 		if err = pg.Close(); err != nil {
 			panic(err)
 		}
-	}()
-	defer func() {
-		if err = mg.Disconnect(context.TODO()); err != nil {
+		if err = database.NoSqlDB.Disconnect(context.TODO()); err != nil {
 			panic(err)
 		}
-	}()
-
-	app := fiber.New()
-	// app.Use(recover.New())
-	// app.Use("/", func(c *fiber.Ctx) error {
-	// 	err := c.Next()
-	// 	defer coreplugins.WebhookSend(coreplugins.NewDiscord(), "hello")
-	// 	return err
-	// })
-	app.Use(middlewere.Recover)
-	app.Use(logger.New())
-	api := app.Group("/api")
-
-	userRepo := repository.NewUserRepositoryDB(db)
-	userService := service.NewUserService(userRepo)
-	// _ = userService
-	authHandler := handler.NewAuthHandler(userService)
-
-	api.Post("/login", authHandler.Login)
-
-	app.Listen(":8000")
-	// hashPassword, err := coreplugins.HashPassword("1234")
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// nk := "bnmbnm"
-	// age := 12
-	// user := model.NewUserRequest{
-	// 	Email:    "beam@gmail.com",
-	// 	Password: "5678",
-	// 	Name:     "beam",
-	// 	Surname:  "test",
-	// 	Nickname: &nk,
-	// 	Age:      &age,
-	// 	Gender:   model.Unspecified,
-	// }
-
-	// res, err := userService.NewUser(user)
-	// users, err := userService.GetUsers()
-	// res, err := userService.Login(model.LoginRequest{Email: "test@gmail.com", Password: "5678"})
-	// if err != nil {
-	// 	log.Println(err)
-	// }
-	// jsonData, err := json.Marshal(res)
-	// if err != nil {
-	// 	log.Fatalf("Error encoding JSON: %v", err)
-	// }
-	// coreplugins.WebhookSend(coreplugins.NewDiscord(), string(jsonData))
-
+	}
 }
 
 type Tea struct {
@@ -93,19 +61,3 @@ type Tea struct {
 	Rating int32
 	Vendor []string `bson:"vendor,omitempty" json:"vendor,omitempty"`
 }
-
-// func GetGenders() {
-// 	genders := []Gender{}
-// 	tx := db.Find(&genders)
-// 	if tx.Error != nil {
-// 		fmt.Println(tx.Error)
-// 		return
-// 	}
-// 	fmt.Println(genders)
-// 	jsonData, err := json.Marshal(genders)
-// 	if err != nil {
-// 		log.Fatalf("Error encoding JSON: %v", err)
-// 	}
-// 	dc := coreplugins.NewDiscord()
-// 	coreplugins.WebhookSend(dc, string(jsonData))
-// }

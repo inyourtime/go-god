@@ -1,8 +1,9 @@
-package coreplugins
+package database
 
 import (
 	"context"
 	"fmt"
+	"gopher/src/coreplugins"
 	"gopher/src/model"
 	"time"
 
@@ -13,48 +14,47 @@ import (
 	"gorm.io/gorm/logger"
 )
 
+var SqlDB *gorm.DB
+var NoSqlDB *mongo.Client
+
 type SqlLogger struct {
 	logger.Interface
 }
 
 func (l SqlLogger) Trace(ctx context.Context, begin time.Time, fc func() (sql string, rowsAffected int64), err error) {
 	sql, _ := fc()
-	// fmt.Printf("%v\n=======================================\n", sql)
-	WebhookSqlLogSend(NewDiscord(), sql)
+	coreplugins.WebhookSqlLogSend(sql)
 }
 
-func InitDatabase() *gorm.DB {
-	dsn := Dsn()
-	dial := postgres.Open(dsn)
-	db, err := gorm.Open(dial, &gorm.Config{
+func ConnectSqlDatabase() {
+	var err error
+	dsn := coreplugins.Dsn()
+	SqlDB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
 		// Logger: &SqlLogger{},
-		Logger: logger.Default.LogMode(logger.Silent),
+		// Logger: logger.Default.LogMode(logger.Silent),
 		DryRun: false,
 	})
 	if err != nil {
 		panic(err)
 	}
 
-	// migration
-	db.AutoMigrate(&model.User{})
-
-	fmt.Println("Database has been initialize")
-	return db
+	SqlDB.AutoMigrate(&model.User{})
+	fmt.Println("Postgres Database has been initialize")
 }
 
-func InitMongo() *mongo.Client {
-	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(MongoUri()))
+func ConnectNoSqlDatabase() {
+	var err error
+	NoSqlDB, err = mongo.Connect(context.TODO(), options.Client().ApplyURI(coreplugins.MongoUri()))
 	if err != nil {
 		panic(err)
 	}
 
-	err = client.Ping(context.TODO(), nil)
+	err = NoSqlDB.Ping(context.TODO(), nil)
 	if err != nil {
 		panic(err)
 	}
 
 	fmt.Println("MongoDB has been initialize")
-	return client
 }
 
 func GetCollection(client *mongo.Client, collectionName string) *mongo.Collection {
