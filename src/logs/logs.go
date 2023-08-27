@@ -54,6 +54,6 @@ func NewDiscordWriter() *DiscordWriter {
 
 func (w *DiscordWriter) Write(p []byte) (n int, err error) {
 	message := string(p)
-	coreplugins.WebhookSend(message)
+	go coreplugins.WebhookSend(message)
 	return len(p), nil
 }

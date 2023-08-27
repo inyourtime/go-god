@@ -45,3 +45,12 @@ type NewUserRequest struct {
 	Age      *int       `json:"age"`
 	Gender   genderType `json:"gender" validate:"required,oneof=male female unspecified"`
 }
+
+type UpdateUserRequest struct {
+	Password *string     `json:"password"`
+	Name     *string     `json:"name"`
+	Surname  *string     `json:"surname"`
+	Nickname *string     `json:"nickname"`
+	Age      *int        `json:"age"`
+	Gender   *genderType `json:"gender" validate:"oneof=male female unspecified"`
+}

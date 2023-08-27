@@ -14,7 +14,7 @@ func SetupAuthRoute(router fiber.Router) {
 	auth := router.Group("/auth")
 
 	// instance other repository
-	userRepo := repository.NewUserRepositoryDB(database.SqlDB)
+	userRepo := repository.NewUserRepository(database.SqlDB)
 
 	// instance other service
 	userService := service.NewUserService(userRepo)

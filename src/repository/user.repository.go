@@ -11,17 +11,18 @@ type UserRepository interface {
 	GetById(id uint) (*model.User, error)
 	Create(user model.User) (*model.User, error)
 	GetByEmail(email string) (*model.User, error)
+	Update(id uint, user model.User) (*model.User, error)
 }
 
-type userRepositoryDB struct {
+type userRepository struct {
 	db *gorm.DB
 }
 
-func NewUserRepositoryDB(db *gorm.DB) UserRepository {
-	return userRepositoryDB{db: db}
+func NewUserRepository(db *gorm.DB) UserRepository {
+	return userRepository{db: db}
 }
 
-func (r userRepositoryDB) GetByEmail(email string) (*model.User, error) {
+func (r userRepository) GetByEmail(email string) (*model.User, error) {
 	user := model.User{}
 	err := r.db.Where(model.User{Email: email}).First(&user).Error
 	if err != nil {
@@ -30,7 +31,7 @@ func (r userRepositoryDB) GetByEmail(email string) (*model.User, error) {
 	return &user, nil
 }
 
-func (r userRepositoryDB) Create(user model.User) (*model.User, error) {
+func (r userRepository) Create(user model.User) (*model.User, error) {
 	err := r.db.Create(&user).Error
 	if err != nil {
 		return nil, err
@@ -38,20 +39,24 @@ func (r userRepositoryDB) Create(user model.User) (*model.User, error) {
 	return &user, nil
 }
 
-func (r userRepositoryDB) GetAll() ([]model.User, error) {
+func (r userRepository) GetAll() ([]model.User, error) {
 	users := []model.User{}
-	err := r.db.Find(&users).Error
+	err := r.db.Order("created_at desc").Find(&users).Error
 	if err != nil {
 		return nil, err
 	}
 	return users, nil
 }
 
-func (r userRepositoryDB) GetById(id uint) (*model.User, error) {
+func (r userRepository) GetById(id uint) (*model.User, error) {
 	user := model.User{}
 	err := r.db.Where(id).First(&user).Error
 	if err != nil {
 		return nil, err
 	}
 	return &user, nil
+}
+
+func (r userRepository) Update(id uint, user model.User) (*model.User, error) {
+	return nil, nil
 }

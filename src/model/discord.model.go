@@ -1,11 +1,8 @@
 package model
 
-type DiscordReq struct {
-	Host       string
-	Url        string
-	Query      map[string]string
-	Body       map[string]interface{}
-	Token      *string
-	SignDate   *float64
-	ExpireDate *float64
+type DiscordErrorLog struct {
+	Level     string `json:"level"`
+	Caller    string `json:"caller"`
+	Message   string `json:"msg"`
+	Timestamp string `json:"timestamp"`
 }

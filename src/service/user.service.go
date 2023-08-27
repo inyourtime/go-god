@@ -17,6 +17,7 @@ type UserService interface {
 	GetUser(id uint) (*model.UserResponse, error)
 	NewUser(request model.NewUserRequest) (*model.UserResponse, error)
 	Login(request model.LoginRequest) (*model.LoginResponse, error)
+	UpdateUser(id uint, request model.UpdateUserRequest) (*model.UserResponse, error)
 }
 
 type userService struct {
@@ -159,4 +160,8 @@ func (s userService) GetUser(id uint) (*model.UserResponse, error) {
 		UpdatedAt: user.UpdatedAt,
 	}
 	return &userResponse, nil
+}
+
+func (s userService) UpdateUser(id uint, request model.UpdateUserRequest) (*model.UserResponse, error) {
+	return nil, nil
 }

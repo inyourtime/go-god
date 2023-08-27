@@ -1,6 +1,8 @@
 package coreplugins
 
 import (
+	"encoding/json"
+	"gopher/src/model"
 	"log"
 
 	"github.com/bwmarrin/discordgo"
@@ -17,15 +19,37 @@ func NewDiscord() {
 }
 
 func WebhookSend(text string) {
+	data := model.DiscordErrorLog{}
+	// Unmarshal the input JSON string into the map
+	if err := json.Unmarshal([]byte(text), &data); err != nil {
+		panic(err)
+	}
+	// Marshal the map back into a pretty-printed JSON string
+	prettyJSON, err := json.MarshalIndent(data, "", "  ")
+	if err != nil {
+		panic(err)
+	}
+
+	emb := []*discordgo.MessageEmbed{
+		{
+			Type:        "rich",
+			Title:       "Error Boommmmm :boom:",
+			Description: "`Environment: Development`",
+			Color:       15548997,
+			Timestamp:   data.Timestamp,
+		},
+	}
+
 	hookMessage := &discordgo.WebhookParams{
-		Content: "```json\n" + text + "\n```",
+		Embeds:  emb,
+		Content: "**Server Error**" + "\n" + "```json\n" + string(prettyJSON) + "\n```",
 	}
 
 	if Discord == nil {
 		Discord, _ = discordgo.New("Bot")
 	}
 
-	_, err := Discord.WebhookExecute(Config.Discord.WebHookID, Config.Discord.Token, false, hookMessage)
+	_, err = Discord.WebhookExecute(Config.Discord.WebHookID, Config.Discord.Token, false, hookMessage)
 	if err != nil {
 		log.Printf("Discord webhook error: %v", err)
 	}

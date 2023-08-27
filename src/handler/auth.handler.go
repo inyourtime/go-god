@@ -33,10 +33,7 @@ func (h authHandler) Login(c *fiber.Ctx) error {
 
 	response, err := h.userService.Login(request)
 	if err != nil {
-		if appErr, ok := err.(*fiber.Error); ok {
-			return errs.FiberError(c, appErr)
-		}
-		return errs.FiberError(c, fiber.ErrInternalServerError)
+		return errs.FiberError(c, err)
 	}
 	return c.JSON(response)
 }
@@ -56,10 +53,7 @@ func (h authHandler) SignUp(c *fiber.Ctx) error {
 
 	response, err := h.userService.NewUser(request)
 	if err != nil {
-		if appErr, ok := err.(*fiber.Error); ok {
-			return errs.FiberError(c, appErr)
-		}
-		return errs.FiberError(c, fiber.ErrInternalServerError)
+		return errs.FiberError(c, err)
 	}
 	return c.JSON(response)
 }
