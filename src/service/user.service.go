@@ -1,15 +1,14 @@
 package service
 
 import (
-	"errors"
 	"gopher/src/coreplugins"
 	"gopher/src/logs"
 	"gopher/src/model"
 	"gopher/src/repository"
+	"reflect"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
-	"gorm.io/gorm"
 )
 
 type UserService interface {
@@ -17,7 +16,7 @@ type UserService interface {
 	GetUser(id uint) (*model.UserResponse, error)
 	NewUser(request model.NewUserRequest) (*model.UserResponse, error)
 	Login(request model.LoginRequest) (*model.LoginResponse, error)
-	UpdateUser(id uint, request model.UpdateUserRequest) (*model.UserResponse, error)
+	UpdateUser(id uint, request model.UpdateUserRequest) error
 }
 
 type userService struct {
@@ -31,11 +30,12 @@ func NewUserService(userRepo repository.UserRepository) UserService {
 func (s userService) Login(request model.LoginRequest) (*model.LoginResponse, error) {
 	user, err := s.userRepo.GetByEmail(request.Email)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, fiber.NewError(fiber.StatusNotFound, "user not found")
-		}
 		logs.Error(err)
 		return nil, err
+	}
+
+	if user == nil {
+		return nil, fiber.NewError(fiber.StatusNotFound, "user not found")
 	}
 
 	ok := coreplugins.CheckPasswordHash(request.Password, user.Password)
@@ -44,6 +44,7 @@ func (s userService) Login(request model.LoginRequest) (*model.LoginResponse, er
 	}
 
 	accessClaims := jwt.MapClaims{
+		"id":       user.ID,
 		"email":    user.Email,
 		"name":     user.Name,
 		"surname":  user.Surname,
@@ -143,12 +144,13 @@ func (s userService) GetUsers() ([]model.UserResponse, error) {
 func (s userService) GetUser(id uint) (*model.UserResponse, error) {
 	user, err := s.userRepo.GetById(id)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, fiber.NewError(fiber.StatusNotFound, "user not found")
-		}
 		logs.Error(err)
 		return nil, err
 	}
+	if user == nil {
+		return nil, fiber.NewError(fiber.StatusNotFound, "user not found")
+	}
+
 	userResponse := model.UserResponse{
 		ID:        user.ID,
 		Email:     user.Email,
@@ -162,6 +164,37 @@ func (s userService) GetUser(id uint) (*model.UserResponse, error) {
 	return &userResponse, nil
 }
 
-func (s userService) UpdateUser(id uint, request model.UpdateUserRequest) (*model.UserResponse, error) {
-	return nil, nil
+// ไว้มาแก้เรื่อง update ทีหลัง
+func (s userService) UpdateUser(id uint, request model.UpdateUserRequest) error {
+	user := model.User{}
+	if !reflect.ValueOf(request.Password).IsZero() {
+		hash, err := coreplugins.HashPassword(request.Password)
+		if err != nil {
+			logs.Error(err)
+			return err
+		}
+		user.Password = hash
+	}
+	if !reflect.ValueOf(request.Name).IsZero() {
+		user.Name = request.Name
+	}
+	if !reflect.ValueOf(request.Surname).IsZero() {
+		user.Surname = request.Surname
+	}
+	if request.Nickname != nil {
+		user.Nickname = request.Nickname
+	}
+	if request.Age != nil {
+		user.Age = request.Age
+	}
+	if !reflect.ValueOf(request.Gender).IsZero() {
+		user.Gender = request.Gender
+	}
+
+	err := s.userRepo.Update(id, user)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

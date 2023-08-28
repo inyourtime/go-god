@@ -30,6 +30,12 @@ func main() {
 	app.Use(middlewere.Recover())
 	app.Use(logger.New())
 
+	// set context for use in service logger
+	app.Use(func(c *fiber.Ctx) error {
+		coreplugins.SetContext(c)
+		return c.Next()
+	})
+
 	router.SetupRoutes(app)
 
 	fmt.Println("Server is running on Port: " + coreplugins.Config.ServerPort)
@@ -55,10 +61,4 @@ func databaseSetting(sql *gorm.DB, nosql *mongo.Client) func() {
 			panic(err)
 		}
 	}
-}
-
-type Tea struct {
-	Type   string
-	Rating int32
-	Vendor []string `bson:"vendor,omitempty" json:"vendor,omitempty"`
 }

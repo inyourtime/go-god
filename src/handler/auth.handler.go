@@ -28,7 +28,7 @@ func (h authHandler) Login(c *fiber.Ctx) error {
 	validate := validator.New()
 	err = validate.Struct(request)
 	if err != nil {
-		return errs.FiberError(c, fiber.ErrBadRequest)
+		return errs.FiberError(c, err)
 	}
 
 	response, err := h.userService.Login(request)

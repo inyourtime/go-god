@@ -16,7 +16,7 @@ const (
 
 type User struct {
 	gorm.Model
-	Email    string `gorm:"unique"`
+	Email    string `gorm:"unique;uniqueIndex"`
 	Password string
 	Name     string
 	Surname  string
@@ -47,10 +47,10 @@ type NewUserRequest struct {
 }
 
 type UpdateUserRequest struct {
-	Password *string     `json:"password"`
-	Name     *string     `json:"name"`
-	Surname  *string     `json:"surname"`
-	Nickname *string     `json:"nickname"`
-	Age      *int        `json:"age"`
-	Gender   *genderType `json:"gender" validate:"oneof=male female unspecified"`
+	Password string     `json:"password,omitempty"`
+	Name     string     `json:"name,omitempty"`
+	Surname  string     `json:"surname,omitempty"`
+	Nickname *string    `json:"nickname,omitempty"`
+	Age      *int       `json:"age,omitempty"`
+	Gender   genderType `json:"gender" validate:"omitempty,oneof=male female unspecified"`
 }

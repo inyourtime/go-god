@@ -7,7 +7,7 @@ func FiberError(c *fiber.Ctx, err error) error {
 		return c.Status(appErr.Code).JSON(appErr)
 	}
 	return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-		"code": fiber.StatusInternalServerError,
+		"code":    fiber.StatusInternalServerError,
 		"message": err.Error(),
 	})
 }

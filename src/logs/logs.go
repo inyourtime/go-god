@@ -2,6 +2,7 @@ package logs
 
 import (
 	"gopher/src/coreplugins"
+	"gopher/src/model"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -54,6 +55,11 @@ func NewDiscordWriter() *DiscordWriter {
 
 func (w *DiscordWriter) Write(p []byte) (n int, err error) {
 	message := string(p)
-	go coreplugins.WebhookSend(message)
+	ev := model.ServerEnvironment{
+		Hostname: coreplugins.Ctx.Hostname(),
+		Url: coreplugins.Ctx.OriginalURL(),
+		Method: coreplugins.Ctx.Method(),
+	}
+	go coreplugins.WebhookSend(message, ev)
 	return len(p), nil
 }

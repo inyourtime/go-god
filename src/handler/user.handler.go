@@ -1,10 +1,12 @@
 package handler
 
 import (
+	"fmt"
 	"gopher/src/errs"
 	"gopher/src/model"
 	"gopher/src/service"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -42,10 +44,36 @@ func (h userHandler) GetDetail(c *fiber.Ctx) error {
 }
 
 func (h userHandler) UpdateDetail(c *fiber.Ctx) error {
+	id, err := c.ParamsInt("id")
+	if err != nil {
+		return errs.FiberError(c, fiber.ErrBadRequest)
+	}
+
+	if id < 0 {
+		return errs.FiberError(c, fiber.ErrBadRequest)
+	}
+
 	request := model.UpdateUserRequest{}
-	err := c.BodyParser(&request)
+	err = c.BodyParser(&request)
 	if err != nil {
 		return errs.FiberError(c, fiber.ErrUnprocessableEntity)
 	}
-	return c.JSON(request)
+
+	validate := validator.New()
+	err = validate.Struct(request)
+	if err != nil {
+		return errs.FiberError(c, err)
+	}
+
+	err = h.userService.UpdateUser(uint(id), request)
+	if err != nil {
+		return errs.FiberError(c, err)
+	}
+
+	resMessage := fmt.Sprintf("update user_id: %v successfully", id)
+
+	return c.JSON(fiber.Map{
+		"code":    200,
+		"message": resMessage,
+	})
 }

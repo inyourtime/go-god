@@ -38,7 +38,7 @@ func ConnectSqlDatabase() {
 		panic(err)
 	}
 
-	SqlDB.AutoMigrate(&model.User{})
+	SqlDB.AutoMigrate(&model.User{}, &model.Post{}, &model.Comment{}, &model.Reply{}, &model.Like{})
 	fmt.Println("Postgres Database has been initialize")
 }
 

@@ -18,38 +18,42 @@ func NewDiscord() {
 	}
 }
 
-func WebhookSend(text string) {
+func WebhookSend(text string, ev model.ServerEnvironment) {
 	data := model.DiscordErrorLog{}
 	// Unmarshal the input JSON string into the map
 	if err := json.Unmarshal([]byte(text), &data); err != nil {
 		panic(err)
 	}
 	// Marshal the map back into a pretty-printed JSON string
-	prettyJSON, err := json.MarshalIndent(data, "", "  ")
-	if err != nil {
-		panic(err)
-	}
+	// prettyJSON, err := json.MarshalIndent(data, "", "  ")
+	// if err != nil {
+	// 	panic(err)
+	// }
 
 	emb := []*discordgo.MessageEmbed{
 		{
 			Type:        "rich",
-			Title:       "Error Boommmmm :boom:",
-			Description: "`Environment: Development`",
+			Title:       "Environment",
+			Description: "**End Point**\n" + ev.Hostname,
 			Color:       15548997,
 			Timestamp:   data.Timestamp,
 		},
 	}
 
+	// fmt.Println(Ctx)
+	s := "\n**[" + ev.Method + "]** `" + ev.Url + "`"
+	// s := ""
+
 	hookMessage := &discordgo.WebhookParams{
 		Embeds:  emb,
-		Content: "**Server Error**" + "\n" + "```json\n" + string(prettyJSON) + "\n```",
+		Content: "**Server Error :boom:** - TypeError: " + data.Message + " at " + data.Caller + s,
 	}
 
 	if Discord == nil {
 		Discord, _ = discordgo.New("Bot")
 	}
 
-	_, err = Discord.WebhookExecute(Config.Discord.WebHookID, Config.Discord.Token, false, hookMessage)
+	_, err := Discord.WebhookExecute(Config.Discord.WebHookID, Config.Discord.Token, false, hookMessage)
 	if err != nil {
 		log.Printf("Discord webhook error: %v", err)
 	}
