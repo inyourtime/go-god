@@ -27,6 +27,12 @@ func (r postRepository) GetAll() ([]model.Post, error) {
 	err := r.db.Preload("User",
 	).Preload("Comments",
 	).Preload("Comments.User",
+	).Preload("Comments.Likes",
+	).Preload("Comments.Likes.User",
+	).Preload("Comments.Replies",
+	).Preload("Comments.Replies.Likes",
+	).Preload("Comments.Replies.Likes.User",
+	).Preload("Comments.Replies.User",
 	).Preload("Likes",
 	).Preload("Likes.User").Find(&posts).Error
 	if err != nil {
@@ -74,5 +80,9 @@ func (r postRepository) Comment(comment model.Comment) error {
 }
 
 func (r postRepository) Reply(reply model.Reply) error {
+	err := r.db.Create(&reply).Error
+	if err != nil {
+		return err
+	}
 	return nil
 }

@@ -26,4 +26,5 @@ func SetupPostRoute(router fiber.Router) {
 	post.Get("/", middlewere.Authenticate(), postHandler.GetList)
 	post.Patch("/like", middlewere.Authenticate(), postHandler.Like)
 	post.Post("/comment", middlewere.Authenticate(), postHandler.Comment)
+	post.Post("/comment/reply", middlewere.Authenticate(), postHandler.Reply)
 }

@@ -13,6 +13,7 @@ type PostService interface {
 	NewPost(userID uint, request model.NewPostRequest) error
 	NewLike(userID uint, request model.LikeRequest) error
 	NewComment(userID uint, req model.CommentRequest) error
+	NewReply(userID uint, req model.ReplyRequest) error
 }
 
 type postService struct {
@@ -32,42 +33,16 @@ func (s postService) GetPosts() ([]model.PostResponse, error) {
 	responses := []model.PostResponse{}
 
 	for _, post := range posts {
-		createdBy := model.CreatedBy{
-			UserID: post.UserID,
-			Name:   post.User.Name + " " + post.User.Surname,
-		}
-		likesBy := []model.LikeBy{}
-		for _, like := range post.Likes {
-			likeBy := model.LikeBy{
-				UserID:    like.UserID,
-				Name:      like.User.Name + " " + like.User.Surname,
-				CreatedAt: like.CreatedAt,
-			}
-			likesBy = append(likesBy, likeBy)
-		}
-		coms := []model.CommentResponse{}
-		for _, com := range post.Comments {
-			createdBy := model.CreatedBy{
-				UserID: com.UserID,
-				Name:   com.User.Name + " " + com.User.Surname,
-			}
-			res := model.CommentResponse{
-				ID:        com.ID,
-				CreatedBy: createdBy,
-				PostID:    com.PostID,
-				Content:   com.Content,
-				CreatedAt: com.CreatedAt,
-				UpdatedAt: com.UpdatedAt,
-			}
-			coms = append(coms, res)
-		}
+		createdBy := model.CreateCreatedBy(post)
+		likesBy := formatLike(post.Likes)
+		comments := formatComment(post.Comments)
 
 		response := model.PostResponse{
 			ID:        post.ID,
 			CreatedBy: createdBy,
 			Content:   post.Content,
 			LikesBy:   likesBy,
-			Comments:  coms,
+			Comments:  comments,
 			CreatedAt: post.CreatedAt,
 			UpdatedAt: post.UpdatedAt,
 		}
@@ -134,4 +109,70 @@ func (s postService) NewComment(userID uint, req model.CommentRequest) error {
 		return err
 	}
 	return nil
+}
+
+func (s postService) NewReply(userID uint, req model.ReplyRequest) error {
+	reply := model.Reply{}
+	reply.UserID = userID
+	reply.CommentID = req.CommentID
+	reply.Content = req.Content
+
+	if err := s.postRepo.Reply(reply); err != nil {
+		logs.Error(err)
+		return err
+	}
+	return nil
+}
+
+func formatLike(likes []model.Like) []model.LikeBy {
+	likesBy := []model.LikeBy{}
+	for _, like := range likes {
+		likeBy := model.LikeBy{
+			UserID:    like.UserID,
+			Name:      like.User.Name + " " + like.User.Surname,
+			CreatedAt: like.CreatedAt,
+		}
+		likesBy = append(likesBy, likeBy)
+	}
+	return likesBy
+}
+
+func formatReply(replies []model.Reply) []model.ReplyResponse {
+	repliesRes := []model.ReplyResponse{}
+	for _, reply := range replies {
+		createdBy := model.CreateCreatedBy(reply)
+		likesBy := formatLike(reply.Likes)
+		replyRes := model.ReplyResponse{
+			ID:        reply.ID,
+			CreatedBy: createdBy,
+			CommentID: reply.CommentID,
+			Content:   reply.Content,
+			LikesBy:   likesBy,
+			CreatedAt: reply.CreatedAt,
+			UpdatedAt: reply.UpdatedAt,
+		}
+		repliesRes = append(repliesRes, replyRes)
+	}
+	return repliesRes
+}
+
+func formatComment(comments []model.Comment) []model.CommentResponse {
+	commentsRes := []model.CommentResponse{}
+	for _, comment := range comments {
+		createdBy := model.CreateCreatedBy(comment)
+		replies := formatReply(comment.Replies)
+		likesBy := formatLike(comment.Likes)
+		res := model.CommentResponse{
+			ID:        comment.ID,
+			CreatedBy: createdBy,
+			PostID:    comment.PostID,
+			Content:   comment.Content,
+			Replies:   replies,
+			LikesBy:   likesBy,
+			CreatedAt: comment.CreatedAt,
+			UpdatedAt: comment.UpdatedAt,
+		}
+		commentsRes = append(commentsRes, res)
+	}
+	return commentsRes
 }

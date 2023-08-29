@@ -78,3 +78,21 @@ func (h postHandler) Comment(c *fiber.Ctx) error {
 	}
 	return c.JSON("success")
 }
+
+func (h postHandler) Reply(c *fiber.Ctx) error {
+	req := model.ReplyRequest{}
+	if err := c.BodyParser(&req); err != nil {
+		return errs.FiberError(c, fiber.ErrUnprocessableEntity)
+	}
+
+	validate := validator.New()
+	if err := validate.Struct(req); err != nil {
+		return errs.FiberError(c, fiber.ErrBadRequest)
+	}
+
+	err := h.postService.NewReply(GetUserID(c), req)
+	if err != nil {
+		return errs.FiberError(c, err)
+	}
+	return c.JSON("success")
+}
