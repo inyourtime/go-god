@@ -11,7 +11,7 @@ import (
 )
 
 func SetupPostRoute(router fiber.Router) {
-	auth := router.Group("/post")
+	post := router.Group("/post")
 
 	// instance other repository
 	postRepo := repository.NewPostRepository(database.SqlDB)
@@ -22,7 +22,8 @@ func SetupPostRoute(router fiber.Router) {
 	// instance other handler
 	postHandler := handler.NewPostHandler(postService)
 
-	auth.Post("/", middlewere.Authenticate(), postHandler.CreateNewPost)
-	auth.Get("/", middlewere.Authenticate(), postHandler.GetList)
-	auth.Patch("/like", middlewere.Authenticate(), postHandler.Like)
+	post.Post("/", middlewere.Authenticate(), postHandler.CreateNewPost)
+	post.Get("/", middlewere.Authenticate(), postHandler.GetList)
+	post.Patch("/like", middlewere.Authenticate(), postHandler.Like)
+	post.Post("/comment", middlewere.Authenticate(), postHandler.Comment)
 }

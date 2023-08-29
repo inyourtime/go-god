@@ -48,12 +48,13 @@ type NewPostRequest struct {
 }
 
 type PostResponse struct {
-	ID        uint      `json:"id"`
-	CreatedBy CreatedBy `json:"created_by"`
-	Content   string    `json:"content"`
-	LikesBy   []LikeBy  `json:"likes_by"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID        uint              `json:"id"`
+	CreatedBy CreatedBy         `json:"created_by"`
+	Content   string            `json:"content"`
+	LikesBy   []LikeBy          `json:"likes_by"`
+	Comments  []CommentResponse `json:"comments"`
+	CreatedAt time.Time         `json:"created_at"`
+	UpdatedAt time.Time         `json:"updated_at"`
 }
 
 type CreatedBy struct {
@@ -68,7 +69,22 @@ type LikeBy struct {
 }
 
 type LikeRequest struct {
-	PostID    *uint `json:"post_id" validate:"required_without_all=CommentID ReplyID"`
-	CommentID *uint `json:"comment_id" validate:"required_without_all=PostID ReplyID"`
-	ReplyID   *uint `json:"reply_id" validate:"required_without_all=PostID CommentID"`
+	LikeTo    string `json:"like_to" validate:"required,oneof=post comment reply"`
+	PostID    *uint  `json:"post_id" validate:"required_without_all=CommentID ReplyID"`
+	CommentID *uint  `json:"comment_id" validate:"required_without_all=PostID ReplyID"`
+	ReplyID   *uint  `json:"reply_id" validate:"required_without_all=PostID CommentID"`
+}
+
+type CommentRequest struct {
+	PostID  uint   `json:"post_id" validate:"required"`
+	Content string `json:"content" validate:"required"`
+}
+
+type CommentResponse struct {
+	ID        uint      `json:"id"`
+	CreatedBy CreatedBy `json:"created_by"`
+	PostID    uint      `json:"post_id"`
+	Content   string    `json:"content"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }

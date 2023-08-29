@@ -25,6 +25,8 @@ func NewPostRepository(db *gorm.DB) PostRepository {
 func (r postRepository) GetAll() ([]model.Post, error) {
 	posts := []model.Post{}
 	err := r.db.Preload("User",
+	).Preload("Comments",
+	).Preload("Comments.User",
 	).Preload("Likes",
 	).Preload("Likes.User").Find(&posts).Error
 	if err != nil {
@@ -64,6 +66,10 @@ func (r postRepository) Like(like model.Like) error {
 }
 
 func (r postRepository) Comment(comment model.Comment) error {
+	err := r.db.Create(&comment).Error
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

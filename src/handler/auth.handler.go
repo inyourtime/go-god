@@ -7,7 +7,6 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt/v5"
 )
 
 type authHandler struct {
@@ -15,7 +14,9 @@ type authHandler struct {
 }
 
 func NewAuthHandler(userService service.UserService) authHandler {
-	return authHandler{userService: userService}
+	return authHandler{
+		userService: userService,
+	}
 }
 
 func (h authHandler) Login(c *fiber.Ctx) error {
@@ -59,11 +60,8 @@ func (h authHandler) SignUp(c *fiber.Ctx) error {
 }
 
 func (h authHandler) Test(c *fiber.Ctx) error {
-	user := c.Locals("user").(*jwt.Token)
-	claims := user.Claims.(jwt.MapClaims)
-	name := claims["name"].(string)
-	surname := claims["surname"].(string)
 	return c.JSON(fiber.Map{
-		"hello": name + surname,
+		"id":    GetUserID(c),
+		"hello": GetFullname(c),
 	})
 }
