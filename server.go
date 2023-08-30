@@ -7,7 +7,6 @@ import (
 	"gopher/src/database"
 	"gopher/src/middlewere"
 	"gopher/src/router"
-	s3 "gopher/src/utils"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -25,10 +24,6 @@ func main() {
 	defer cleanup()
 
 	coreplugins.NewDiscord()
-
-	s3Handler := s3.NewS3Handler()
-
-	fmt.Printf("Presigned URL For object: %s\n", s3Handler.Download("O2OGwoe3z9.jpeg"))
 
 	app := fiber.New()
 

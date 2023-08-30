@@ -44,16 +44,16 @@ func initS3() *s3.Client {
 	return s3.NewFromConfig(cfg)
 }
 
-func (h s3Handler) Download(path string) string {
+func (h s3Handler) Download(path string) (*string, error) {
 	presignClient := s3.NewPresignClient(h.client)
 	presignResult, err := presignClient.PresignGetObject(context.TODO(), &s3.GetObjectInput{
 		Bucket: aws.String(coreplugins.Config.R2.Bucket),
 		Key:    aws.String(path),
 	})
 	if err != nil {
-		panic("Couldn't get presigned URL for PutObject")
+		return nil, err
 	}
-	return presignResult.URL
+	return &presignResult.URL, nil
 }
 
 func (h s3Handler) ListObjects() []types.Object {
@@ -70,22 +70,27 @@ func (h s3Handler) ListObjects() []types.Object {
 	return listObjectsOutput.Contents
 }
 
-func (h s3Handler) UploadFile(file *multipart.FileHeader) {
+func (h s3Handler) UploadFile(file *multipart.FileHeader) (*string, error) {
 	ct := file.Header["Content-Type"][0]
 	f, err := file.Open()
 	if err != nil {
-		logs.Error(err)
+		return nil, err
 	}
-	p := generatePath(getFileType(ct))
+	p, err := generatePath(getFileType(ct))
+	if err != nil {
+		return nil, err
+	}
 	_, err = h.client.PutObject(context.TODO(), &s3.PutObjectInput{
 		Bucket:      aws.String(coreplugins.Config.R2.Bucket),
-		Key:         aws.String(p),
+		Key:         aws.String(*p),
 		Body:        f,
 		ContentType: aws.String(ct),
 	})
 	if err != nil {
-		logs.Error(err)
+		return nil, err
 	}
+
+	return p, nil
 }
 
 func getFileType(mimeType string) string {
@@ -93,11 +98,11 @@ func getFileType(mimeType string) string {
 	return parts[len(parts) - 1]
 }
 
-func generatePath(fileType string) string {
+func generatePath(fileType string) (*string, error) {
 	rd, err := gonanoid.New(10)
 	if err != nil {
-		logs.Error(err)
+		return nil, err
 	}
 	path := rd + "." + fileType
-	return path
+	return &path, nil
 }

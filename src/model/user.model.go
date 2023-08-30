@@ -16,24 +16,26 @@ const (
 
 type User struct {
 	gorm.Model
-	Email    string `gorm:"unique;uniqueIndex"`
-	Password string
-	Name     string
-	Surname  string
-	Nickname *string
-	Age      *int
-	Gender   genderType `gorm:"type:gender_type"`
+	Email        string `gorm:"unique;uniqueIndex"`
+	Password     string
+	Name         string
+	Surname      string
+	Nickname     *string
+	Age          *int
+	Gender       genderType `gorm:"type:gender_type"`
+	ProfileImage *string
 }
 
 type UserResponse struct {
-	ID        uint       `json:"id"`
-	Email     string     `json:"email"`
-	Name      string     `json:"name"`
-	Surname   string     `json:"surname"`
-	Nickname  *string    `json:"nickname"`
-	Age       *int       `json:"age"`
-	Gender    genderType `json:"gender"`
-	UpdatedAt time.Time  `json:"updated_at"`
+	ID         uint       `json:"id"`
+	Email      string     `json:"email"`
+	Name       string     `json:"name"`
+	Surname    string     `json:"surname"`
+	Nickname   *string    `json:"nickname"`
+	Age        *int       `json:"age"`
+	Gender     genderType `json:"gender"`
+	ProfileUrl *string    `json:"profile_url"`
+	UpdatedAt  time.Time  `json:"updated_at"`
 }
 
 type NewUserRequest struct {

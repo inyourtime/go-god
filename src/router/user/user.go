@@ -25,4 +25,5 @@ func SetupUserRoute(router fiber.Router) {
 	user.Get("/", middlewere.Authenticate(), userHandler.GetList)
 	user.Get("/:id/detail", middlewere.Authenticate(), userHandler.GetDetail)
 	user.Put("/:id/detail", middlewere.Authenticate(), userHandler.UpdateDetail)
+	user.Post("/profile/image", middlewere.Authenticate(), userHandler.UpdateProfile)
 }

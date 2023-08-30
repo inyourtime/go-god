@@ -5,6 +5,8 @@ import (
 	"gopher/src/logs"
 	"gopher/src/model"
 	"gopher/src/repository"
+	s3 "gopher/src/utils"
+	"mime/multipart"
 	"reflect"
 
 	"github.com/gofiber/fiber/v2"
@@ -17,6 +19,7 @@ type UserService interface {
 	NewUser(request model.NewUserRequest) (*model.UserResponse, error)
 	Login(request model.LoginRequest) (*model.LoginResponse, error)
 	UpdateUser(id uint, request model.UpdateUserRequest) error
+	UpdateUserProfile(id uint, file *multipart.FileHeader) error
 }
 
 type userService struct {
@@ -151,15 +154,22 @@ func (s userService) GetUser(id uint) (*model.UserResponse, error) {
 		return nil, fiber.NewError(fiber.StatusNotFound, "user not found")
 	}
 
+	imgUrl, err := s3.NewS3Handler().Download(*user.ProfileImage)
+	if err != nil {
+		logs.Error(err)
+		return nil, err
+	}
+
 	userResponse := model.UserResponse{
-		ID:        user.ID,
-		Email:     user.Email,
-		Name:      user.Name,
-		Surname:   user.Surname,
-		Nickname:  user.Nickname,
-		Age:       user.Age,
-		Gender:    user.Gender,
-		UpdatedAt: user.UpdatedAt,
+		ID:         user.ID,
+		Email:      user.Email,
+		Name:       user.Name,
+		Surname:    user.Surname,
+		Nickname:   user.Nickname,
+		Age:        user.Age,
+		Gender:     user.Gender,
+		ProfileUrl: imgUrl,
+		UpdatedAt:  user.UpdatedAt,
 	}
 	return &userResponse, nil
 }
@@ -193,8 +203,26 @@ func (s userService) UpdateUser(id uint, request model.UpdateUserRequest) error 
 
 	err := s.userRepo.Update(id, user)
 	if err != nil {
+		logs.Error(err)
 		return err
 	}
 
+	return nil
+}
+
+func (s userService) UpdateUserProfile(id uint, file *multipart.FileHeader) error {
+	path, err := s3.NewS3Handler().UploadFile(file)
+	if err != nil {
+		logs.Error(err)
+		return err
+	}
+	user := model.User{
+		ProfileImage: path,
+	}
+	err = s.userRepo.Update(id, user)
+	if err != nil {
+		logs.Error(err)
+		return err
+	}
 	return nil
 }

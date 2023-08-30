@@ -77,3 +77,15 @@ func (h userHandler) UpdateDetail(c *fiber.Ctx) error {
 		"message": resMessage,
 	})
 }
+
+func (h userHandler) UpdateProfile(c *fiber.Ctx) error {
+	file, err := c.FormFile("file")
+	if err != nil {
+		return errs.FiberError(c, err)
+	}
+	err = h.userService.UpdateUserProfile(GetUserID(c), file)
+	if err != nil {
+		return errs.FiberError(c, err)
+	}
+	return c.JSON("ok")
+}
