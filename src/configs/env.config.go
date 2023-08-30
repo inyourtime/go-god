@@ -5,6 +5,7 @@ type Env struct {
 	Discord    DisCordWebHook `mapstructure:"discord"`
 	Database   DataBase       `mapstructure:"database"`
 	JwtSecret  string         `mapstructure:"jwt_secret"`
+	R2         R2             `mapstructure:"r2"`
 }
 
 type DisCordWebHook struct {
@@ -31,4 +32,11 @@ type Postgres struct {
 
 type Mongo struct {
 	Uri string `mapstructure:"uri"`
+}
+
+type R2 struct {
+	AccountID       string `mapstructure:"account_id"`
+	AccessKeyID     string `mapstructure:"access_key_id"`
+	AccessKeySecret string `mapstructure:"access_key_secret"`
+	Bucket          string `mapstructure:"bucket"`
 }

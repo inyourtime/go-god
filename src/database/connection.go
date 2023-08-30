@@ -37,6 +37,11 @@ func ConnectSqlDatabase() {
 	if err != nil {
 		panic(err)
 	}
+	var t string
+	SqlDB.Raw("SELECT typname FROM pg_type WHERE typname = ?", "gender_type").Scan(&t)
+	if t == "" {
+		SqlDB.Exec("CREATE TYPE gender_type AS ENUM ('male', 'female', 'unspecified')")
+	}
 
 	SqlDB.AutoMigrate(&model.User{}, &model.Post{}, &model.Comment{}, &model.Reply{}, &model.Like{})
 	fmt.Println("Postgres Database has been initialize")

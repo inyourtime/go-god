@@ -34,15 +34,18 @@ func InitConfig() {
 }
 
 func Dsn() string {
-	config, _ := Env()
+	if Config == nil {
+		Config, _ = Env()
+	}
+
 	dsn := fmt.Sprintf("host=%v user=%v dbname=%v port=%v password=%v search_path=%v sslmode=%v",
-		config.Database.Postgres.Host,
-		config.Database.Postgres.User,
-		config.Database.Postgres.Dbname,
-		config.Database.Postgres.Port,
-		config.Database.Postgres.Password,
-		config.Database.Postgres.SearchPath,
-		config.Database.Postgres.Sslmode,
+		Config.Database.Postgres.Host,
+		Config.Database.Postgres.User,
+		Config.Database.Postgres.Dbname,
+		Config.Database.Postgres.Port,
+		Config.Database.Postgres.Password,
+		Config.Database.Postgres.SearchPath,
+		Config.Database.Postgres.Sslmode,
 	)
 	return dsn
 }
