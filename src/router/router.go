@@ -11,6 +11,9 @@ import (
 func SetupRoutes(app *fiber.App) {
 	api := app.Group("/api")
 
+	app.Get("/healthcheck", func(c *fiber.Ctx) error {
+		return c.JSON("OK")
+	})
 	// setup other routes
 	authRoute.SetupAuthRoute(api)
 	userRoute.SetupUserRoute(api)
