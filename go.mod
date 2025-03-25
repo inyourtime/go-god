@@ -11,7 +11,7 @@ require (
 	github.com/go-playground/validator/v10 v10.15.1
 	github.com/gofiber/contrib/jwt v1.0.4
 	github.com/gofiber/fiber/v2 v2.48.0
-	github.com/golang-jwt/jwt/v5 v5.0.0
+	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/matoous/go-nanoid/v2 v2.0.0
 	github.com/spf13/viper v1.16.0
 	github.com/stretchr/testify v1.8.4
